@@ -2,6 +2,9 @@ use std::{env, path::PathBuf, sync::atomic::AtomicBool, sync::atomic::Ordering, 
 
 pub use xshell::*;
 
+pub type Error = Box<dyn std::error::Error>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
+
 pub fn section(name: &'static str) -> Section {
     Section::new(name)
 }
@@ -32,28 +35,29 @@ pub struct CargoToml {
 }
 
 impl CargoToml {
-    pub fn version(&self) -> &str {
+    pub fn version(&self) -> Result<&str> {
         self.get("version")
     }
 
-    pub fn get(&self, field: &str) -> &str {
+    fn get(&self, field: &str) -> Result<&str> {
         for line in self.contents.lines() {
             let words = line.split_ascii_whitespace().collect::<Vec<_>>();
             match words.as_slice() {
                 [n, "=", v, ..] if n.trim() == field => {
                     assert!(v.starts_with('"') && v.ends_with('"'));
-                    return &v[1..v.len() - 1];
+                    return Ok(&v[1..v.len() - 1]);
                 }
                 _ => (),
             }
         }
-        panic!("can't find `{}` in {}", field, self.path.display())
+        Err(format!("can't find `{}` in {}", field, self.path.display()))?
     }
 
     pub fn publish(&self) -> Result<()> {
         let token = env::var("CRATES_IO_TOKEN").unwrap_or("no token".to_string());
         let dry_run = dry_run();
-        cmd!("cargo publish --token {token} {dry_run...}").run()
+        cmd!("cargo publish --token {token} {dry_run...}").run()?;
+        Ok(())
     }
 }
 
@@ -63,7 +67,8 @@ pub mod git {
     use super::{dry_run, Result};
 
     pub fn current_branch() -> Result<String> {
-        cmd!("git branch --show-current").read()
+        let res = cmd!("git branch --show-current").read()?;
+        Ok(res)
     }
 
     pub fn tag_list() -> Result<Vec<String>> {
@@ -81,12 +86,14 @@ pub mod git {
         if dry_run().is_some() {
             return Ok(());
         }
-        cmd!("git tag {tag}").run()
+        cmd!("git tag {tag}").run()?;
+        Ok(())
     }
 
     pub fn push_tags() -> Result<()> {
         let dry_run = dry_run();
-        cmd!("git push --tags {dry_run...}").run()
+        cmd!("git push --tags {dry_run...}").run()?;
+        Ok(())
     }
 }
 

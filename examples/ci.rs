@@ -22,7 +22,7 @@ fn try_main() -> Result<()> {
         cmd!("cargo test --workspace --no-run").run()?;
     }
 
-    let version = cargo_toml.version();
+    let version = cargo_toml.version()?;
     let tag = format!("v{}", version);
     let dry_run = env::var("CI").is_err()
         || git::tag_list()?.contains(&tag)
