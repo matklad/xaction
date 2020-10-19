@@ -1,0 +1,11 @@
+[package]
+name = "xaction"
+version = "0.1.0"
+description = "action-less automation for GitHub actions"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/matklad/xaction"
+authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+xshell = "0.1.6"
