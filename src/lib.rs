@@ -9,6 +9,10 @@ pub fn section(name: &'static str) -> Section {
     Section::new(name)
 }
 
+pub fn push_rustup_toolchain(name: &str) -> Pushenv {
+    pushenv("RUSTUP_TOOLCHAIN", name)
+}
+
 static DRY_RUN: AtomicBool = AtomicBool::new(false);
 pub fn set_dry_run(yes: bool) {
     DRY_RUN.store(yes, Ordering::Relaxed)
