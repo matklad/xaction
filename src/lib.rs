@@ -95,8 +95,13 @@ pub mod git {
     }
 
     pub fn push_tags() -> Result<()> {
-        let dry_run = dry_run();
-        cmd!("git push --tags {dry_run...}").run()?;
+        // `git push --tags --dry-run` exists, but it will fail with permissions
+        // error for forks.
+        if dry_run().is_some() {
+            return Ok(());
+        }
+
+        cmd!("git push --tags").run()?;
         Ok(())
     }
 }
