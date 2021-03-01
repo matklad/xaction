@@ -1,4 +1,10 @@
-use std::{env, path::PathBuf, sync::atomic::AtomicBool, sync::atomic::Ordering, time::Instant};
+use std::{
+    env,
+    path::PathBuf,
+    sync::atomic::AtomicBool,
+    sync::atomic::Ordering,
+    time::{Duration, Instant},
+};
 
 pub use xshell::*;
 
@@ -61,6 +67,22 @@ impl CargoToml {
         let token = env::var("CRATES_IO_TOKEN").unwrap_or("no token".to_string());
         let dry_run = dry_run();
         cmd!("cargo publish --token {token} {dry_run...}").run()?;
+        Ok(())
+    }
+    pub fn publish_all(&self, pkgs: &[&str]) -> Result<()> {
+        let token = env::var("CRATES_IO_TOKEN").unwrap_or("no token".to_string());
+        if dry_run().is_none() {
+            for &pkg in pkgs {
+                for _ in 0..20 {
+                    std::thread::sleep(Duration::from_secs(10));
+                    if cmd!("cargo publish --token {token} --package {pkg} --dry-run").run().is_ok()
+                    {
+                        break;
+                    }
+                }
+                cmd!("cargo publish --token {token} --package {pkg}").run()?;
+            }
+        }
         Ok(())
     }
 }
